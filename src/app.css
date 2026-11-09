@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #3b7e57;
+    color: #ffffff;
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+  }
+}
+
+/* Custom interactive transitions & utilities */
+.btn-outline {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 border border-white text-xs uppercase tracking-wider font-semibold rounded-none hover:bg-white hover:text-[#3b7e57] transition-all duration-300;
+}
+
+.icon-arrow-btn {
+  @apply w-10 h-10 rounded-full border border-white/60 flex items-center justify-center text-white hover:bg-white hover:text-[#3b7e57] hover:border-white transition-all duration-200 focus:outline-none;
+}
+
+.section-label {
+  @apply flex items-center text-sm md:text-base font-bold tracking-widest uppercase mb-6 text-white;
+}
+
+.section-label::before {
+  content: "|";
+  margin-right: 0.5rem;
+  font-weight: 900;
+}
+
+/* Custom image placeholder box */
+.placeholder-box {
+  @apply bg-[#cce3d2] flex items-center justify-center relative overflow-hidden transition-all duration-500;
+}
+
+/* Custom scrollbar for clean aesthetics */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #306947;
+}
+::-webkit-scrollbar-thumb {
+  background: #4d986d;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cce3d2;
+}
+
