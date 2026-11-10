@@ -1,10 +1,46 @@
 <script>
+  import { searchDatabase, globalSearchQuery } from '../data/searchIndex.js';
+
   let activeMenu = null; // 'work' | 'people' | 'news' | 'about' | null
   let isNavbarHovered = false;
   let leaveTimeout = null;
   let mobileMenuOpen = false;
   let mobileExpandedMenu = null; // 'work' | 'people' | 'about' | null
   let isSearchOpen = false;
+  let navSearchInput = '';
+
+  $: liveSearchResults = navSearchInput.trim().length >= 2 ? searchDatabase(navSearchInput) : null;
+
+  function toggleSearch() {
+    isSearchOpen = !isSearchOpen;
+    if (isSearchOpen) {
+      activeMenu = null;
+    }
+  }
+
+  function submitNavSearch() {
+    const q = navSearchInput.trim();
+    if (!q) return;
+    globalSearchQuery.set(q);
+    isSearchOpen = false;
+    window.location.hash = `#search?q=${encodeURIComponent(q)}`;
+  }
+
+  function handleSearchKeydown(e) {
+    if (e.key === 'Enter') {
+      submitNavSearch();
+    } else if (e.key === 'Escape') {
+      isSearchOpen = false;
+      navSearchInput = '';
+    }
+  }
+
+  function navigateToResult(url) {
+    isSearchOpen = false;
+    navSearchInput = '';
+    activeMenu = null;
+    window.location.hash = url;
+  }
 
   $: isWhiteMode = Boolean(isNavbarHovered || activeMenu || isSearchOpen || mobileMenuOpen);
 
@@ -84,7 +120,9 @@
       leaveTimeout = null;
     }
     isNavbarHovered = true;
-    activeMenu = menuKey;
+    if (!isSearchOpen) {
+      activeMenu = menuKey;
+    }
   }
 
   function handleNavbarMouseLeave() {
@@ -121,7 +159,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <!-- Top Utility Row: Publications & Collaborators -->
-      <div class="flex justify-end items-center py-2.5 text-xs transition-colors duration-300 {isWhiteMode ? 'text-gray-500 border-b border-gray-100' : 'text-white/80 border-b border-white/10'} gap-8">
+      <div class="hidden md:flex justify-end items-center py-2.5 text-xs transition-colors duration-300 {isWhiteMode ? 'text-gray-500 border-b border-gray-100' : 'text-white/80 border-b border-white/10'} gap-8">
         <a href="#publications" class="{isWhiteMode ? 'hover:text-gray-900' : 'hover:text-white'} transition-colors">Publications</a>
         <a href="#collaborators" class="{isWhiteMode ? 'hover:text-gray-900' : 'hover:text-white'} transition-colors">Collaborators</a>
       </div>
@@ -203,7 +241,7 @@
           <!-- 5. Search Icon -->
           <button 
             type="button"
-            on:click={() => isSearchOpen = !isSearchOpen}
+            on:click={toggleSearch}
             aria-label="Search" 
             class="p-2 rounded-full transition-colors ml-2 focus:outline-none {isWhiteMode ? 'text-gray-900 hover:text-black hover:bg-gray-100' : 'text-white hover:bg-white/10'}"
           >
@@ -219,7 +257,7 @@
           <!-- Mobile Search Button -->
           <button 
             type="button"
-            on:click={() => isSearchOpen = !isSearchOpen}
+            on:click={toggleSearch}
             aria-label="Search" 
             class="p-2 rounded-full focus:outline-none transition-colors {isWhiteMode ? 'text-gray-900 hover:bg-gray-100' : 'text-white hover:bg-white/10'}"
           >
@@ -249,21 +287,106 @@
 
       </div>
 
-      <!-- Quick Search Bar Toggle -->
+      <!-- Quick Search Bar Toggle with Hybrid Instant Preview -->
       {#if isSearchOpen}
-        <div class="py-3 border-t {isWhiteMode ? 'border-gray-100' : 'border-white/20'} flex items-center gap-3">
-          <input 
-            type="text" 
-            placeholder="Search research, people, publications..."
-            class="w-full rounded px-4 py-2 text-sm focus:outline-none {isWhiteMode ? 'bg-gray-50 border border-gray-200 text-gray-900 focus:border-[#3b7e57]' : 'bg-white/10 border border-white/20 text-white placeholder-white/60 focus:border-white'}"
-          />
-          <button 
-            type="button"
-            on:click={() => isSearchOpen = false} 
-            class="text-xs uppercase font-bold px-2 {isWhiteMode ? 'text-gray-500 hover:text-gray-900' : 'text-white/80 hover:text-white'}"
-          >
-            Cancel
-          </button>
+        <div class="py-3 border-t {isWhiteMode ? 'border-gray-100' : 'border-white/20'} relative z-[60]">
+          <div class="flex items-center gap-3">
+            <div class="relative flex-grow flex items-center">
+              <input 
+                type="text" 
+                bind:value={navSearchInput}
+                on:keydown={handleSearchKeydown}
+                placeholder="Cari riset, publikasi, berita, staf (Tekan Enter untuk hasil lengkap)..."
+                class="w-full rounded-none px-4 py-2.5 text-sm focus:outline-none transition-all {isWhiteMode ? 'bg-gray-50 border border-gray-300 text-gray-900 focus:border-[#3b7e57] focus:bg-white shadow-inner' : 'bg-white/10 border border-white/30 text-white placeholder-white/60 focus:border-white focus:bg-white/20'}"
+              />
+              {#if navSearchInput}
+                <button
+                  type="button"
+                  on:click={() => navSearchInput = ''}
+                  class="absolute right-3 text-xs text-gray-400 hover:text-gray-700"
+                  aria-label="Bersihkan"
+                >
+                  ✕
+                </button>
+              {/if}
+            </div>
+
+            <button
+              type="button"
+              on:click={submitNavSearch}
+              class="px-5 py-2.5 bg-[#3b7e57] hover:bg-[#306847] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm shrink-0"
+            >
+              Cari ↵
+            </button>
+
+            <button 
+              type="button"
+              on:click={() => { isSearchOpen = false; navSearchInput = ''; }} 
+              class="text-xs uppercase font-bold px-2 py-2 {isWhiteMode ? 'text-gray-500 hover:text-gray-900' : 'text-white/80 hover:text-white'} transition-colors shrink-0"
+            >
+              Tutup
+            </button>
+          </div>
+
+          <!-- Instant Live Preview Dropdown (Grouped like Spotlight) -->
+          {#if liveSearchResults && liveSearchResults.totalCount > 0}
+            <div 
+              class="absolute left-0 right-0 top-full mt-1 bg-white text-gray-900 shadow-2xl border border-gray-200 z-[70] overflow-hidden animate-fadeIn"
+              role="region"
+              aria-label="Hasil Pencarian Cepat"
+            >
+              <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100 p-2 sm:p-3">
+                {#each liveSearchResults.categories as cat}
+                  {#if liveSearchResults.groups[cat] && liveSearchResults.groups[cat].length > 0}
+                    <div class="py-2.5 first:pt-1 last:pb-1">
+                      <div class="flex items-center gap-2 px-2.5 mb-1.5">
+                        <span class="w-1 h-3 bg-[#3b7e57]"></span>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 font-mono">
+                          {cat}
+                        </span>
+                      </div>
+
+                      <div class="space-y-1">
+                        {#each liveSearchResults.groups[cat].slice(0, 3) as item}
+                          <button
+                            type="button"
+                            on:click={() => navigateToResult(item.url)}
+                            class="w-full text-left px-2.5 py-1.5 rounded hover:bg-emerald-50 transition-colors flex items-start justify-between gap-3 group"
+                          >
+                            <div class="min-w-0 flex-grow">
+                              <h4 class="text-xs font-bold text-gray-900 group-hover:text-[#3b7e57] truncate">
+                                {item.title}
+                              </h4>
+                              <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
+                            <span class="text-[10px] font-mono uppercase bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0 group-hover:bg-[#3b7e57] group-hover:text-white transition-colors">
+                              {item.type}
+                            </span>
+                          </button>
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+                {/each}
+              </div>
+
+              <!-- Bottom Action to open Dedicated Search Page -->
+              <button
+                type="button"
+                on:click={submitNavSearch}
+                class="w-full text-center py-2.5 px-4 bg-gray-50 hover:bg-emerald-100/70 border-t border-gray-200 text-xs font-extrabold text-[#3b7e57] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <span>Lihat seluruh {liveSearchResults.totalCount} hasil pencarian</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white text-gray-700 shadow-sm border border-gray-200">↵ Enter</span>
+              </button>
+            </div>
+          {:else if navSearchInput.trim().length >= 2}
+            <div class="absolute left-0 right-0 top-full mt-1 bg-white text-gray-600 p-4 shadow-xl border border-gray-200 z-[70] text-center text-xs">
+              Tidak ada hasil instan untuk "<strong>{navSearchInput}</strong>". Tekan <strong class="text-black">Enter</strong> untuk pencarian mendalam di halaman pencarian.
+            </div>
+          {/if}
         </div>
       {/if}
 
@@ -273,10 +396,10 @@
     <!-- DESKTOP FULL-WIDTH MEGA MENU DRAWER (Pure White)         -->
     <!-- Floating absolute overlay                                -->
     <!-- ======================================================== -->
-    {#if activeMenu && megaMenus[activeMenu]}
+    {#if !isSearchOpen && activeMenu && megaMenus[activeMenu]}
       {@const currentMega = megaMenus[activeMenu]}
       <div 
-        class="hidden md:block absolute top-full left-0 w-full bg-white text-gray-900 border-t border-gray-100 shadow-2xl py-12 lg:py-16 transition-all duration-300 animate-fadeIn z-50"
+        class="hidden md:block absolute top-full left-0 w-full bg-white text-gray-900 border-t border-gray-100 shadow-2xl py-12 lg:py-16 transition-all duration-300 animate-fadeIn z-40"
         role="region"
         aria-label="{currentMega.title} submenu"
         on:mouseenter={() => handleMenuMouseEnter(activeMenu)}
@@ -457,7 +580,6 @@
             <a href="#publications" on:click={() => mobileMenuOpen = false} class="hover:text-gray-900 font-medium">Publications</a>
             <a href="#collaborators" on:click={() => mobileMenuOpen = false} class="hover:text-gray-900 font-medium">Collaborators</a>
           </div>
-          <span class="text-[10px] text-gray-400 font-mono font-bold">EHA INSTITUTE</span>
         </div>
       </div>
     {/if}
