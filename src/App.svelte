@@ -20,6 +20,9 @@
   import WhoWeAre from './pages/WhoWeAre.svelte';
   import Career from './pages/Career.svelte';
   import News from './pages/News.svelte';
+  import Publications from './pages/Publications.svelte';
+  import Collaborators from './pages/Collaborators.svelte';
+  import SearchResults from './pages/SearchResults.svelte';
 
   let currentRoute = 'home';
 
@@ -47,6 +50,12 @@
       currentRoute = 'careers';
     } else if (hash === '#news' || hash === '#/news') {
       currentRoute = 'news';
+    } else if (hash === '#publications' || hash === '#/publications') {
+      currentRoute = 'publications';
+    } else if (hash === '#collaborators' || hash === '#/collaborators') {
+      currentRoute = 'collaborators';
+    } else if (hash.startsWith('#search') || hash.startsWith('#/search')) {
+      currentRoute = 'search';
     } else {
       currentRoute = 'home';
     }
@@ -68,7 +77,10 @@
         route === 'leadership' ? 'leadership' :
         route === 'who-we-are' ? 'who-we-are' :
         route === 'careers' ? 'careers' :
-        route === 'news' ? 'news' : ''
+        route === 'news' ? 'news' :
+        route === 'publications' ? 'publications' :
+        route === 'collaborators' ? 'collaborators' :
+        route === 'search' ? 'search' : ''
       );
     }
     currentRoute = route;
@@ -106,6 +118,12 @@
   <Career />
 {:else if currentRoute === 'news'}
   <News />
+{:else if currentRoute === 'publications'}
+  <Publications />
+{:else if currentRoute === 'collaborators'}
+  <Collaborators />
+{:else if currentRoute === 'search'}
+  <SearchResults />
 {:else}
   <!-- Home Landing Page -->
   <div class="min-h-screen bg-[#3b7e57] text-white flex flex-col font-sans selection:bg-white selection:text-[#3b7e57]">
@@ -140,7 +158,10 @@
     { key: 'leadership', label: 'Leadership' },
     { key: 'who-we-are', label: 'Who We Are' },
     { key: 'careers', label: 'Career' },
-    { key: 'news', label: 'News' }
+    { key: 'news', label: 'News' },
+    { key: 'publications', label: 'Publications' },
+    { key: 'collaborators', label: 'Collaborators' },
+    { key: 'search', label: 'Search' }
   ] as p}
     <button
       type="button"
